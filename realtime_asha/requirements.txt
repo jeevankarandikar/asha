@@ -1,0 +1,35 @@
+# project asha - real-time hand pose system
+# requirements for python 3.11 runtime environment (asha_env)
+# this is the main environment for running the application
+#
+# setup:
+#   python3.11 -m venv asha_env
+#   source asha_env/bin/activate
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements.txt
+
+# core numerical computing
+numpy>=1.26.0
+scipy>=1.11.0
+pandas>=2.1.0
+
+# computer vision
+opencv-python>=4.9.0.80
+mediapipe>=0.10.14
+
+# 3d mesh processing and rendering (for mano version)
+trimesh>=4.4.9
+pyrender>=0.1.45
+pyglet>=1.5.27
+
+# gui
+PyQt5>=5.15.11
+
+# utilities
+tqdm>=4.66.4
+matplotlib>=3.7.0
+
+# notes:
+# - pytorch installed separately (see setup above)
+# - custom mano loader (mano_layer.py) reads converted .pkl files
+# - avoids chumpy/python 3.11 compatibility issues

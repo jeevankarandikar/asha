@@ -1,0 +1,47 @@
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# virtual environments
+asha_env/
+mano_convert_env/
+venv/
+env/
+ENV/
+
+# mano models (too large, need separate download)
+realtime_asha/mano_models/*.pkl
+realtime_asha/mano_models/*.npz
+realtime_asha/mano_models/*.bak
+
+# ide
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# logs
+*.log
+
+# os
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# project specific
+*.avi
+*.mp4
+output/
+results/

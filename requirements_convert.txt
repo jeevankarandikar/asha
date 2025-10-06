@@ -1,0 +1,24 @@
+# project asha - mano conversion environment requirements
+# requirements for python 3.10 conversion environment (mano_convert_env)
+# this is a one-time environment for converting legacy mano .pkl files
+#
+# purpose: convert mano models with chumpy objects to pure numpy
+# usage: only needed once when you first download mano models
+#
+# setup:
+#   python3.10 -m venv mano_convert_env
+#   source mano_convert_env/bin/activate
+#   pip install -r requirements_convert.txt
+#
+# then run:
+#   python realtime_asha/src/convert_mano_to_numpy.py
+
+# specific versions that work with chumpy
+numpy==1.23.5
+scipy==1.10.1
+chumpy==0.70
+
+# notes:
+# - python 3.10 required (chumpy doesn't work in 3.11+)
+# - these are older versions to maintain chumpy compatibility
+# - after conversion, you won't need this environment again
