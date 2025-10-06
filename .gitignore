@@ -11,6 +11,9 @@ build/
 # virtual environments
 asha_env/
 mano_convert_env/
+asha310/
+asha310conv/
+asha310run/
 venv/
 env/
 ENV/
@@ -34,6 +37,10 @@ realtime_asha/mano_models/*.bak
 
 # logs
 *.log
+
+# docs/notes
+CLAUDE.md
+FIX_NOTES.md
 
 # os
 Thumbs.db
