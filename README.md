@@ -14,12 +14,12 @@ python realtime_asha/src/realtime_simple.py
 
 ## files
 
-**realtime_simple.py** - mediapipe only (recommended, 60 fps)
-**realtime_mano.py** - with mano parametric model (needs mano setup below)
-**mediapipe_utils.py** - hand tracking wrapper
-**mano_layer.py** - custom mano loader
-**mano_utils.py** - mano interface
-**test_mano.py** - tests
+- **realtime_simple.py** - mediapipe only (recommended, 60 fps)
+- **realtime_mano.py** - with mano parametric model (needs mano setup below)
+- **mediapipe_utils.py** - hand tracking wrapper
+- **mano_layer.py** - custom mano loader
+- **mano_utils.py** - mano interface
+- **test_mano.py** - tests
 
 ## requirements
 
@@ -59,6 +59,6 @@ python realtime_asha/src/realtime_mano.py
 
 ## troubleshooting
 
-**camera won't open** - check permissions in system preferences
-**mps not available** - need apple silicon, falls back to cpu
-**mano loading fails** - run conversion script above
+- **camera won't open** - check permissions in system preferences
+- **mps not available** - need apple silicon, falls back to cpu
+- **mano loading fails** - run conversion script above
