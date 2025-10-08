@@ -1,5 +1,14 @@
 """
-real-time 3d hand tracking using mediapipe directly. no mano, no inverse kinematics.
+real-time hand tracking - mediapipe_v0 (mediapipe baseline, no mano).
+
+shows raw mediapipe detection without any hand model.
+just 21 keypoints rendered as scatter plot in 3d.
+
+use this to demonstrate the baseline before adding mano.
+very fast but no mesh surface.
+
+to run:
+  python src/mediapipe_v0.py
 """
 
 import sys
@@ -205,7 +214,7 @@ class SimpleApp(QtWidgets.QWidget):
         print("starting up...")
 
         # window setup
-        self.setWindowTitle("project asha - simple hand tracking")
+        self.setWindowTitle("project asha - mediapipe_v0 (baseline)")
         self.setGeometry(100, 100, 1600, 600)
 
         # create the ui
@@ -278,7 +287,7 @@ class SimpleApp(QtWidgets.QWidget):
 def main():
     """entry point"""
     print("=" * 60)
-    print("project asha - simple hand tracking")
+    print("project asha - mediapipe_v0 (baseline)")
     print("=" * 60)
 
     app = QtWidgets.QApplication(sys.argv)

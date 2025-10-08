@@ -39,6 +39,48 @@ def get_landmarks(frame_bgr: np.ndarray) -> np.ndarray | None:
     return None
 
 
+def get_landmarks_world(frame_bgr: np.ndarray) -> np.ndarray | None:
+    """
+    find hand in image and return 21 keypoints in world coordinates (meters), or none if no hand.
+
+    world coordinates are:
+    - metric (meters, not normalized)
+    - origin at wrist, right-handed coordinate system
+    - more stable depth than image landmarks
+    - preferred for 3d pose estimation / MANO fitting
+
+    falls back to image coordinates (normalized 0-1) if world landmarks unavailable.
+    includes validation to reject bad detections (span >2m or NaN values).
+    """
+    if frame_bgr is None or frame_bgr.size == 0:
+        return None
+
+    # mediapipe neural network expects rgb
+    rgb = frame_bgr[:, :, ::-1]
+    results = _hands.process(rgb)
+
+    # prefer world landmarks (metric coordinates, better for 3d)
+    if results.multi_hand_world_landmarks:
+        lm = results.multi_hand_world_landmarks[0].landmark
+        coords = np.array([[p.x, p.y, p.z] for p in lm], dtype=np.float32)
+
+        # sanity check: reject if scale is unrealistic
+        # typical hand span is ~0.2m, reject if >2m (likely bad detection)
+        span = coords.max(axis=0) - coords.min(axis=0)
+        if np.any(span > 2.0) or np.any(np.isnan(coords)):
+            # bad world landmarks, fall through to image coords
+            pass
+        else:
+            return coords
+
+    # fallback: use normalized image coordinates (old behavior)
+    if results.multi_hand_landmarks:
+        lm = results.multi_hand_landmarks[0].landmark
+        return np.array([[p.x, p.y, p.z] for p in lm], dtype=np.float32)
+
+    return None
+
+
 def draw_landmarks_on_frame(frame_bgr: np.ndarray, landmarks: np.ndarray) -> None:
     """draw green dots on hand keypoints. modifies frame in-place."""
     if landmarks is None:

@@ -11,17 +11,12 @@ build/
 # virtual environments
 asha_env/
 mano_convert_env/
-asha310/
-asha310conv/
-asha310run/
 venv/
 env/
 ENV/
 
 # mano models (too large, need separate download)
-realtime_asha/mano_models/*.pkl
-realtime_asha/mano_models/*.npz
-realtime_asha/mano_models/*.bak
+models/*.pkl
 
 # ide
 .vscode/
@@ -40,15 +35,10 @@ realtime_asha/mano_models/*.bak
 
 # docs/notes
 CLAUDE.md
-FIX_NOTES.md
+.claude/
 
 # os
 Thumbs.db
 .Spotlight-V100
 .Trashes
 
-# project specific
-*.avi
-*.mp4
-output/
-results/

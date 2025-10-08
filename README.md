@@ -1,6 +1,6 @@
 # asha
 
-real-time 3d hand tracking
+real-time 3d hand tracking with mano parametric model
 
 ## quick start
 
@@ -9,38 +9,42 @@ git clone https://github.com/jeevankarandikar/asha.git
 cd asha
 ./setup_runtime_env.sh
 source asha_env/bin/activate
-python realtime_asha/src/realtime_simple.py
+python src/mano_v1.py
 ```
+
+## versions
+
+- **mediapipe_v0** - mediapipe only (scatter plot, ~60 fps)
+- **mano_v1** - full ik + lbs (articulation, ~25 fps)
 
 ## files
 
-- **realtime_simple.py** - mediapipe only (recommended, 60 fps)
-- **realtime_mano.py** - with mano parametric model (needs mano setup below)
-- **mediapipe_utils.py** - hand tracking wrapper
-- **mano_layer.py** - custom mano loader
-- **mano_utils.py** - mano interface
-- **test_mano.py** - tests
+- **mediapipe_v0.py** - mediapipe baseline
+- **mano_v1.py** - full ik + articulation
+- **tracker.py** - hand tracking wrapper
+- **mano_model.py** - custom mano loader with lbs
+- **pose_fitter.py** - mano interface + ik optimization
+- **test.py** - run all tests
+- **test_mediapipe_v0.py, test_mano_v1.py** - version-specific tests
 
 ## requirements
 
 - python 3.11
 - webcam
 
-## mano setup (optional)
-
-only needed for realtime_mano.py
+## mano setup
 
 ### 1. download mano models
 
 - get from https://mano.is.tue.mpg.de/download.php
-- place MANO_RIGHT.pkl and MANO_LEFT.pkl in `realtime_asha/mano_models/`
+- place MANO_RIGHT.pkl and MANO_LEFT.pkl in `models/`
 
 ### 2. convert models (python 3.10)
 
 ```bash
 ./setup_convert_env.sh
 source mano_convert_env/bin/activate
-python realtime_asha/src/convert_mano_to_numpy.py
+python src/convert_mano_to_numpy.py
 deactivate
 ```
 
@@ -48,13 +52,13 @@ deactivate
 
 ```bash
 source asha_env/bin/activate
-python realtime_asha/src/test_mano.py
+python src/test.py
 ```
 
 ### 4. run
 
 ```bash
-python realtime_asha/src/realtime_mano.py
+python src/mano_v1.py
 ```
 
 ## troubleshooting

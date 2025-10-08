@@ -31,5 +31,5 @@ matplotlib>=3.7.0
 
 # notes:
 # - pytorch installed separately (see setup above)
-# - custom mano loader (mano_layer.py) reads converted .pkl files
+# - custom mano loader (mano_model.py) reads converted .pkl files
 # - avoids chumpy/python 3.11 compatibility issues

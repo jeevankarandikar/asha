@@ -11,7 +11,7 @@
 #   pip install -r requirements_convert.txt
 #
 # then run:
-#   python realtime_asha/src/convert_mano_to_numpy.py
+#   python src/convert_mano_to_numpy.py
 
 # specific versions that work with chumpy
 numpy==1.23.5

@@ -29,7 +29,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 echo ""
 echo "installing core dependencies..."
-pip install -r realtime_asha/requirements.txt
+pip install -r requirements.txt
 
 echo ""
 echo "verifying mps support..."
@@ -41,8 +41,6 @@ echo ""
 echo "to activate:"
 echo "  source asha_env/bin/activate"
 echo ""
-echo "then run simple version (recommended):"
-echo "  python realtime_asha/src/realtime_simple.py"
-echo ""
-echo "or mano version (research):"
-echo "  python realtime_asha/src/realtime_mano.py"
+echo "then run:"
+echo "  python src/mano_v1.py        # full ik + lbs"
+echo "  python src/mediapipe_v0.py   # mediapipe baseline"
