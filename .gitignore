@@ -36,6 +36,15 @@ models/*.pkl
 # docs/notes
 CLAUDE.md
 .claude/
+docs/Presentation_Outline.md
+
+# generated metrics (can be regenerated with extract_results.py)
+docs/v1_metrics.json
+
+# recorded data
+data/
+*.h5
+*.hdf5
 
 # os
 Thumbs.db

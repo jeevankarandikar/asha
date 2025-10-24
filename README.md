@@ -1,36 +1,39 @@
-# asha
+# Project Asha
 
-real-time 3d hand tracking with mano parametric model
+Real-time 3D hand pose estimation via MANO parametric model optimization + EMG integration for camera-free tracking.
 
-## quick start
+## Quick Start
 
 ```bash
 git clone https://github.com/jeevankarandikar/asha.git
 cd asha
 ./setup_runtime_env.sh
 source asha_env/bin/activate
-python src/mano_v1.py
+
+# Run systems
+python src/mano_v1.py          # CV pipeline (MANO IK optimization)
+python src/main_v2.py          # Full system (CV + EMG recording)
 ```
 
-## versions
+## Systems
 
-- **mediapipe_v0** - mediapipe only (scatter plot, ~60 fps)
-- **mano_v1** - full ik + lbs (articulation, ~25 fps)
+- **mano_v1** - MANO IK optimization with multi-term loss (~25 fps, real-time)
+- **main_v2** - EMG integration + synchronized data recording (CV pipeline + 8ch EMG @ 500Hz)
 
-## files
+## Core Files
 
-- **mediapipe_v0.py** - mediapipe baseline
-- **mano_v1.py** - full ik + articulation
-- **tracker.py** - hand tracking wrapper
-- **mano_model.py** - custom mano loader with lbs
-- **pose_fitter.py** - mano interface + ik optimization
-- **test.py** - run all tests
-- **test_mediapipe_v0.py, test_mano_v1.py** - version-specific tests
+- **pose_fitter.py** - MANO IK optimization (joint position, bone direction, temporal, regularization)
+- **mano_model.py** - Custom MANO layer (LBS implementation)
+- **tracker.py** - MediaPipe hand tracking wrapper
+- **emg_utils.py** - MindRove interface + signal processing
+- **data_recorder.py** - HDF5 synchronized recording
 
-## requirements
+## For CIS 6800 Proposal
 
-- python 3.11
-- webcam
+See **[`docs/README.md`](docs/README.md)** for complete workflow:
+- Extract metrics from v1 system
+- Generate publication-quality plots
+- Compile LaTeX proposal
 
 ## mano setup
 

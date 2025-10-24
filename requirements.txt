@@ -29,7 +29,15 @@ PyQt5>=5.15.11
 tqdm>=4.66.4
 matplotlib>=3.7.0
 
+# emg acquisition and recording (for main_v2)
+mindrove>=1.0.0
+h5py>=3.10.0
+pyqtgraph>=0.13.3
+
 # notes:
 # - pytorch installed separately (see setup above)
 # - custom mano loader (mano_model.py) reads converted .pkl files
 # - avoids chumpy/python 3.11 compatibility issues
+# - mindrove provides wifi board interface for 8-channel emg @ 500hz
+# - h5py for synchronized emg + pose recording
+# - pyqtgraph for real-time emg plotting (faster than matplotlib)

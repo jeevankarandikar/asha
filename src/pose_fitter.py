@@ -369,7 +369,7 @@ def _get_state() -> _IKState:
 # simple version (neutral pose, no optimization)
 # ============================================================
 
-def mano_from_landmarks_simple(landmarks: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def mano_from_landmarks_simple(landmarks: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
     """
     convert mediapipe landmarks to mano hand mesh (neutral pose, no optimization).
 
@@ -389,6 +389,8 @@ def mano_from_landmarks_simple(landmarks: np.ndarray) -> Tuple[np.ndarray, np.nd
     returns:
       vertices: [778, 3] MANO mesh vertices (neutral pose)
       joints: [21, 3] MANO joint positions (neutral pose)
+      theta: [45] MANO pose parameters (all zeros for neutral)
+      ik_error: float, set to 999.0 to indicate fallback mode
     """
     layer = _lazy_load_layer()
 
@@ -403,15 +405,16 @@ def mano_from_landmarks_simple(landmarks: np.ndarray) -> Tuple[np.ndarray, np.nd
     # [0] removes batch dimension (we only process one hand at a time)
     verts_np = verts[0].detach().cpu().numpy().astype(np.float32)
     joints_np = joints[0].detach().cpu().numpy().astype(np.float32)
+    theta_np = pose[0].detach().cpu().numpy().astype(np.float32)  # [45]
 
-    return verts_np, joints_np
+    return verts_np, joints_np, theta_np, 999.0  # high error indicates fallback
 
 
 # ============================================================
 # IK version (full optimization with fallback)
 # ============================================================
 
-def mano_from_landmarks(landmarks: np.ndarray, verbose: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+def mano_from_landmarks(landmarks: np.ndarray, verbose: bool = False) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
     """
     convert mediapipe landmarks to mano hand mesh via inverse kinematics optimization.
 
@@ -459,6 +462,8 @@ def mano_from_landmarks(landmarks: np.ndarray, verbose: bool = False) -> Tuple[n
     returns:
       vertices: [778, 3] MANO mesh vertices (aligned to camera space)
       joints: [21, 3] MANO joint positions (aligned to camera space)
+      theta: [45] MANO pose parameters (axis-angle joint rotations)
+      ik_error: float, final optimization loss (convergence quality metric)
     """
     layer = _lazy_load_layer()
     state = _get_state()
@@ -548,6 +553,12 @@ def mano_from_landmarks(landmarks: np.ndarray, verbose: bool = False) -> Tuple[n
     s, R, t = _umeyama(mano_sel, mp_landmarks, with_scale=True)
     verts_aligned = _apply_rigid(verts, s, R, t)
     joints_aligned = _apply_rigid(joints, s, R, t)
+    mano_aligned = _apply_rigid(mano_sel, s, R, t)  # aligned selected joints for error calc
+
+    # compute actual joint position error in millimeters
+    # mean distance between aligned mano joints and mediapipe landmarks
+    joint_errors = torch.norm(mano_aligned - mp_landmarks, dim=1)  # [21] distances
+    ik_error_mm = joint_errors.mean().item() * 1000  # convert meters to mm
 
     # update warm-start state for next frame
     state.pose = pose.detach()
@@ -556,10 +567,11 @@ def mano_from_landmarks(landmarks: np.ndarray, verbose: bool = False) -> Tuple[n
     state.frame_count += 1
 
     # convert to numpy
-    return (
-        verts_aligned.detach().cpu().numpy().astype(np.float32),
-        joints_aligned.detach().cpu().numpy().astype(np.float32),
-    )
+    verts_np = verts_aligned.detach().cpu().numpy().astype(np.float32)
+    joints_np = joints_aligned.detach().cpu().numpy().astype(np.float32)
+    theta_np = pose[0].detach().cpu().numpy().astype(np.float32)  # [45]
+
+    return verts_np, joints_np, theta_np, ik_error_mm
 
 
 # ============================================================

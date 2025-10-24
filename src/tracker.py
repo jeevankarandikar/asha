@@ -19,8 +19,14 @@ _hands = mp_hands.Hands(
 )
 
 
-def get_landmarks(frame_bgr: np.ndarray) -> np.ndarray | None:
-    """find hand in image and return 21 keypoints with (x,y,z) coords, or none if no hand."""
+def get_landmarks(frame_bgr: np.ndarray) -> tuple[np.ndarray, float] | None:
+    """
+    find hand in image and return 21 keypoints with (x,y,z) coords, or none if no hand.
+
+    returns:
+      (landmarks, confidence): landmarks [21, 3] and confidence score [0-1]
+      or None if no hand detected
+    """
     if frame_bgr is None or frame_bgr.size == 0:
         return None
 
@@ -34,12 +40,19 @@ def get_landmarks(frame_bgr: np.ndarray) -> np.ndarray | None:
         # get first hand (we only track one anyway)
         lm = results.multi_hand_landmarks[0].landmark
         # convert to numpy array: 21 points, each with (x, y, z)
-        return np.array([[p.x, p.y, p.z] for p in lm], dtype=np.float32)
+        landmarks = np.array([[p.x, p.y, p.z] for p in lm], dtype=np.float32)
+
+        # get confidence score from multi_handedness
+        confidence = 0.0
+        if results.multi_handedness and len(results.multi_handedness) > 0:
+            confidence = results.multi_handedness[0].classification[0].score
+
+        return landmarks, confidence
 
     return None
 
 
-def get_landmarks_world(frame_bgr: np.ndarray) -> np.ndarray | None:
+def get_landmarks_world(frame_bgr: np.ndarray) -> tuple[np.ndarray, float] | None:
     """
     find hand in image and return 21 keypoints in world coordinates (meters), or none if no hand.
 
@@ -51,6 +64,10 @@ def get_landmarks_world(frame_bgr: np.ndarray) -> np.ndarray | None:
 
     falls back to image coordinates (normalized 0-1) if world landmarks unavailable.
     includes validation to reject bad detections (span >2m or NaN values).
+
+    returns:
+      (landmarks, confidence): landmarks [21, 3] and confidence score [0-1]
+      or None if no hand detected
     """
     if frame_bgr is None or frame_bgr.size == 0:
         return None
@@ -58,6 +75,11 @@ def get_landmarks_world(frame_bgr: np.ndarray) -> np.ndarray | None:
     # mediapipe neural network expects rgb
     rgb = frame_bgr[:, :, ::-1]
     results = _hands.process(rgb)
+
+    # get confidence score (same for both world and image landmarks)
+    confidence = 0.0
+    if results.multi_handedness and len(results.multi_handedness) > 0:
+        confidence = results.multi_handedness[0].classification[0].score
 
     # prefer world landmarks (metric coordinates, better for 3d)
     if results.multi_hand_world_landmarks:
@@ -71,18 +93,26 @@ def get_landmarks_world(frame_bgr: np.ndarray) -> np.ndarray | None:
             # bad world landmarks, fall through to image coords
             pass
         else:
-            return coords
+            return coords, confidence
 
     # fallback: use normalized image coordinates (old behavior)
     if results.multi_hand_landmarks:
         lm = results.multi_hand_landmarks[0].landmark
-        return np.array([[p.x, p.y, p.z] for p in lm], dtype=np.float32)
+        landmarks = np.array([[p.x, p.y, p.z] for p in lm], dtype=np.float32)
+        return landmarks, confidence
 
     return None
 
 
-def draw_landmarks_on_frame(frame_bgr: np.ndarray, landmarks: np.ndarray) -> None:
-    """draw green dots on hand keypoints. modifies frame in-place."""
+def draw_landmarks_on_frame(frame_bgr: np.ndarray, landmarks: np.ndarray, confidence: float = 0.0) -> None:
+    """
+    draw green dots on hand keypoints with optional confidence overlay. modifies frame in-place.
+
+    args:
+      frame_bgr: image frame
+      landmarks: [21, 3] hand keypoints
+      confidence: optional confidence score to display (0-1)
+    """
     if landmarks is None:
         return
 
@@ -98,3 +128,9 @@ def draw_landmarks_on_frame(frame_bgr: np.ndarray, landmarks: np.ndarray) -> Non
             # draw green dot
             cv2.circle(frame_bgr, (cx, cy), 4, (0, 255, 0), -1)
             cv2.circle(frame_bgr, (cx, cy), 4, (0, 200, 0), 1)  # darker border for visibility
+
+    # draw confidence score in top-left corner
+    if confidence > 0:
+        text = f"MP Conf: {confidence:.2f}"
+        cv2.putText(frame_bgr, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
+                   0.7, (0, 255, 0), 2, cv2.LINE_AA)

@@ -71,17 +71,18 @@ class VideoThread(QtCore.QThread):
                 # detect hand landmarks
                 # prefer world coordinates (metric, more stable depth)
                 # fall back to image coordinates (normalized 0-1) if world unavailable
-                landmarks = get_landmarks_world(frame)
-                if landmarks is None:
-                    landmarks = get_landmarks(frame)
+                result = get_landmarks_world(frame)
+                if result is None:
+                    result = get_landmarks(frame)
 
                 verts = None
 
-                if landmarks is not None:
+                if result is not None:
+                    landmarks, confidence = result
                     # draw landmarks on frame
-                    draw_landmarks_on_frame(frame, landmarks)
+                    draw_landmarks_on_frame(frame, landmarks, confidence)
                     # generate MANO mesh via IK fitting
-                    verts, _ = mano_from_landmarks(landmarks)
+                    verts, _, _, _ = mano_from_landmarks(landmarks)
 
                 self.frame_signal.emit(frame, verts)
         finally:
