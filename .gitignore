@@ -36,10 +36,20 @@ models/*.pkl
 # docs/notes
 CLAUDE.md
 .claude/
-docs/Presentation_Outline.md
+docs/archive/
+SESSION_NOTES_*.md
+*_UPDATES*.tex
+*_UPDATES*.md
+MIDTERM_REPORT_FINAL.tex
+DOCUMENTATION_INDEX.md
+QUICK_REFERENCE.md
+CLEANUP_SUMMARY.md
+SESSION_RECOVERY_SUMMARY.md
+docs/reports/*.tex
 
-# generated metrics (can be regenerated with extract_results.py)
+# generated metrics (can be regenerated)
 docs/v1_metrics.json
+src/results/
 
 # recorded data
 data/
