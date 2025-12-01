@@ -14,10 +14,13 @@ usage:
   python run_experiments.py --quick  # fast test mode
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import argparse
 import json
 import time
-from pathlib import Path
 from typing import Dict, List
 import numpy as np
 import cv2

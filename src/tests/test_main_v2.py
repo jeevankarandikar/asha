@@ -8,10 +8,14 @@ validates:
   - integration tests
 """
 
+import sys
 import numpy as np
 import h5py
 import tempfile
 from pathlib import Path
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.emg_utils import filter_emg
 from utils.data_recorder import DataRecorder

@@ -28,7 +28,8 @@ models/*.pkl
 
 # jupyter
 .ipynb_checkpoints/
-*.ipynb
+# Allow training notebooks in src/training/
+# *.ipynb
 
 # logs
 *.log
@@ -55,6 +56,12 @@ src/results/
 data/
 *.h5
 *.hdf5
+
+# training checkpoints (can be large: ~300MB-500MB per checkpoint)
+checkpoints/
+src/training/checkpoints/
+*.pth
+*.pt
 
 # os
 Thumbs.db

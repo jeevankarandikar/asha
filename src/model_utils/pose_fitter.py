@@ -111,8 +111,8 @@ def get_torch_device() -> torch.device:
     # return torch.device("cpu")
 
 
-# where mano model files live
-_MANO_ROOT = Path(__file__).resolve().parents[1] / "models"
+# where mano model files live (project root, not src/)
+_MANO_ROOT = Path(__file__).resolve().parents[2] / "models"
 _DEVICE = get_torch_device()
 
 # singleton - load model once and reuse

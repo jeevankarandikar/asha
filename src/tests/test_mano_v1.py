@@ -5,10 +5,15 @@ validates inverse kinematics, joint mapping, convergence, and performance.
 run after setting up mano models to ensure mano_v1 works correctly.
 """
 
+import sys
 import time
 import numpy as np
 import torch
 from typing import Tuple
+from pathlib import Path
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from model_utils.pose_fitter import (
     mano_from_landmarks,
@@ -95,7 +100,7 @@ def test_convergence_synthetic():
         landmarks = joints_true.copy()
 
         # run IK (should recover close to true_pose)
-        verts_ik, joints_ik = mano_from_landmarks(landmarks, verbose=False)
+        verts_ik, joints_ik, theta_ik, ik_error = mano_from_landmarks(landmarks, verbose=False)
 
         # measure joint error (after IK, should be very small)
         joint_error = np.linalg.norm(joints_ik - joints_true)

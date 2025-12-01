@@ -8,7 +8,8 @@ reports overall status across all versions.
 import sys
 from pathlib import Path
 
-# add src to path
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))
 
 
