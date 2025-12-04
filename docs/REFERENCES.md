@@ -60,8 +60,23 @@
 - 103,462 annotated frames
 - rgb-d hand-object interaction
 - 640×480 resolution, severe occlusion challenge
+- annotations: 3d joint positions (handJoints3D), may require mano fitting
 - our use: public dataset evaluation with occlusion (experiment 5)
 - results: 5% detection rate (occlusion heavy), 17.64mm mean error on detected
+- download: https://github.com/shreyashampali/ho3d or kaggle datasets download -d marcmarais/ho3d-v3
+
+**dexycb (chao et al., cvpr 2021)**
+- 582k rgb-d frames, 1,000 sequences, 10 subjects, 8 views
+- hand-object grasping interactions with mano parameters
+- mano annotations: direct mano parameters (theta, beta) with fixed shape per subject
+- best for: pose diversity, grasping poses, classifiable gestures
+- download: https://dex-ycb.github.io/
+  - option 1: single file `dex-ycb-20210415.tar.gz` (119gb) - recommended
+  - option 2: multiple files (10 subject files ~12gb each + calibration + models)
+- toolkit: https://github.com/NVlabs/dex-ycb-toolkit
+- license: cc by-nc 4.0 (non-commercial use)
+- paper: docs/references/dexycb2021.pdf
+- our use: best addition for pose diversity (582k frames vs 103k ho-3d)
 
 ## ground truth & weak supervision
 
