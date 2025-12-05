@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 Project Asha Contributors
+Copyright (c) 2024-2025 Project Asha Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,3 +27,19 @@ ADDITIONAL NOTICES:
 This software uses MANO hand models which are subject to separate licensing terms.
 MANO models must be obtained from https://mano.is.tue.mpg.de/ and are provided
 for research purposes only. Users must agree to MANO's license terms separately.
+
+This software uses MediaPipe Hands for hand landmark detection.
+MediaPipe is licensed under Apache License 2.0.
+See: https://github.com/google/mediapipe
+
+This software uses the FreiHAND dataset for training and evaluation.
+FreiHAND is provided for research purposes only. Commercial use is prohibited.
+Users must cite the FreiHAND paper when using this dataset:
+  @InProceedings{Freihand2019,
+    author    = {Christian Zimmermann, Duygu Ceylan, Jimei Yang, Bryan Russell, Max Argus and Thomas Brox},
+    title     = {FreiHAND: A Dataset for Markerless Capture of Hand Pose and Shape from Single RGB Images},
+    booktitle = {IEEE International Conference on Computer Vision (ICCV)},
+    year      = {2019},
+    url       = {https://lmb.informatik.uni-freiburg.de/projects/freihand/}
+  }
+See: https://lmb.informatik.uni-freiburg.de/resources/datasets/FreiHand.en.html
