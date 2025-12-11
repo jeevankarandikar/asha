@@ -102,19 +102,22 @@ class VideoThread(QtCore.QThread):
 
 
 class EMGThread(QtCore.QThread):
-    """background thread for emg acquisition @ 500hz."""
+    """background thread for emg acquisition @ 500hz with optional imu fusion."""
 
-    # signal: (timestamps, emg_raw, emg_filtered, connected)
-    emg_signal = QtCore.pyqtSignal(object, object, object, bool)
+    # signal: (timestamps, emg_raw, emg_filtered, imu_data, connected)
+    emg_signal = QtCore.pyqtSignal(object, object, object, object, bool)
 
-    def __init__(self, parent: Optional[QtCore.QObject] = None, enable_emg: bool = True):
+    def __init__(self, parent: Optional[QtCore.QObject] = None, enable_emg: bool = True, enable_imu: bool = False):
         super().__init__(parent)
         self._running = threading.Event()
         self._running.set()
         self._enable_emg = enable_emg
+        self._enable_imu = enable_imu
         self._mindrove = MindroveInterface() if enable_emg else None
         self._connected = False
         self._frame_count = 0
+        # IMU data placeholder (for v5 Snaptic kit integration)
+        self._imu_data = None  # Will be populated when IMU hardware is available
 
     def stop(self):
         """signal the thread to stop."""
@@ -128,7 +131,8 @@ class EMGThread(QtCore.QThread):
             while self._running.is_set():
                 dummy_timestamps = np.array([0.0])
                 dummy_emg = np.zeros((1, 8), dtype=np.float32)
-                self.emg_signal.emit(dummy_timestamps, dummy_emg, dummy_emg, False)
+                dummy_imu = np.zeros((1, 18), dtype=np.float32) if self._enable_imu else None  # 2 IMUs × 9-DOF
+                self.emg_signal.emit(dummy_timestamps, dummy_emg, dummy_emg, dummy_imu, False)
                 threading.Event().wait(0.1)  # 10 Hz dummy updates
             return
 
@@ -143,7 +147,8 @@ class EMGThread(QtCore.QThread):
             while self._running.is_set():
                 dummy_timestamps = np.array([0.0])
                 dummy_emg = np.zeros((1, 8), dtype=np.float32)
-                self.emg_signal.emit(dummy_timestamps, dummy_emg, dummy_emg, False)
+                dummy_imu = np.zeros((1, 18), dtype=np.float32) if self._enable_imu else None
+                self.emg_signal.emit(dummy_timestamps, dummy_emg, dummy_emg, dummy_imu, False)
                 threading.Event().wait(0.1)
             return
 
@@ -158,9 +163,20 @@ class EMGThread(QtCore.QThread):
                 if timestamps.size > 0:
                     # filter emg
                     emg_filtered = filter_emg(emg_raw)
+                    
+                    # IMU fusion stub (for v5 Snaptic kit)
+                    # TODO: Integrate actual IMU hardware when available
+                    # Expected format: [N, 18] where 18 = 2 IMUs × 9-DOF (accel + gyro + mag)
+                    imu_data = None
+                    if self._enable_imu:
+                        # Placeholder: will be replaced with actual IMU data
+                        # For now, create dummy data matching EMG timestamps
+                        imu_data = np.zeros((len(timestamps), 18), dtype=np.float32)
+                        # In v5: Replace with actual IMU readings from Snaptic kit
+                        # imu_data = self._snaptic_interface.get_imu_data(timestamps)
 
-                    # emit to gui
-                    self.emg_signal.emit(timestamps, emg_raw, emg_filtered, True)
+                    # emit to gui (includes IMU data for fusion)
+                    self.emg_signal.emit(timestamps, emg_raw, emg_filtered, imu_data, True)
 
                     self._frame_count += 1
                     if self._frame_count % 500 == 0:  # every second
@@ -188,12 +204,29 @@ class RealtimeApp(QtWidgets.QWidget):
     note: emg runs in background without visualization to avoid lag
     """
 
-    def __init__(self, enable_emg: bool = True):
+    def __init__(self, enable_emg: bool = True, enable_pseudo_labeling: bool = False, transformer_model_path: Optional[str] = None):
         super().__init__()
         print("[info] initializing project asha (main_v2 - emg + mano ik)...")
 
         self.setWindowTitle("project asha - main_v2 (emg + mano ik)")
         self.setGeometry(100, 100, 1600, 720)  # panels + protocol + controls
+
+        # Pseudo-labeling mode: use transformer_v1 to generate GT θ for EMG recordings
+        self.enable_pseudo_labeling = enable_pseudo_labeling
+        self.transformer_model = None
+        if enable_pseudo_labeling and transformer_model_path:
+            try:
+                import torch
+                from pathlib import Path
+                # Load transformer model for pseudo-labeling
+                # TODO: Implement actual model loading based on transformer_v1 architecture
+                print(f"[info] pseudo-labeling enabled: will use transformer model from {transformer_model_path}")
+                print("[warning] transformer model loading not yet implemented - using IK θ for now")
+                # self.transformer_model = torch.load(transformer_model_path, map_location='cpu')
+                # self.transformer_model.eval()
+            except Exception as e:
+                print(f"[warning] failed to load transformer model: {e}")
+                print("[info] falling back to IK-based θ generation")
 
         # setup gui
         self._setup_ui()
@@ -214,7 +247,7 @@ class RealtimeApp(QtWidgets.QWidget):
         self.video_thread.start()
 
         print("[info] starting emg thread...")
-        self.emg_thread = EMGThread(enable_emg=enable_emg)
+        self.emg_thread = EMGThread(enable_emg=enable_emg, enable_imu=False)  # IMU disabled for now (v5)
         self.emg_thread.emg_signal.connect(self.update_emg)
         self.emg_thread.start()
 
@@ -583,14 +616,29 @@ class RealtimeApp(QtWidgets.QWidget):
 
         # record pose if active
         if self.recording and self.recorder and theta is not None and joints is not None:
-            self.recorder.record_pose(theta, joints, ik_error, mp_confidence)
+            # Pseudo-labeling mode: use transformer_v1 to generate GT θ instead of IK
+            if self.enable_pseudo_labeling and self.transformer_model is not None and frame_bgr is not None:
+                try:
+                    # Run transformer inference on frame to get better θ estimate
+                    # TODO: Implement actual transformer inference
+                    # For now, use IK θ (will be replaced when transformer model is loaded)
+                    pseudo_theta = theta  # Placeholder
+                    # pseudo_theta = self._run_transformer_inference(frame_bgr)
+                    self.recorder.record_pose(pseudo_theta, joints, ik_error, mp_confidence)
+                except Exception as e:
+                    print(f"[warning] pseudo-labeling failed: {e}, using IK θ")
+                    self.recorder.record_pose(theta, joints, ik_error, mp_confidence)
+            else:
+                # Standard mode: use IK θ
+                self.recorder.record_pose(theta, joints, ik_error, mp_confidence)
 
-    @QtCore.pyqtSlot(object, object, object, bool)
+    @QtCore.pyqtSlot(object, object, object, object, bool)
     def update_emg(
         self,
         timestamps: np.ndarray,
         emg_raw: np.ndarray,
         emg_filtered: np.ndarray,
+        imu_data: Optional[np.ndarray],
         connected: bool
     ):
         """update emg status and record data if active (no visualization)."""
@@ -607,6 +655,7 @@ class RealtimeApp(QtWidgets.QWidget):
         # record emg if active and connected
         if self.recording and self.recorder and connected:
             self.recorder.record_emg(emg_raw, emg_filtered)
+            # Note: IMU data can be added to recorder in v5 when hardware is available
 
     def _update_mesh(self, verts: np.ndarray):
         """update 3d mesh with new vertices (rotated to match camera view)."""
@@ -654,6 +703,47 @@ class RealtimeApp(QtWidgets.QWidget):
             self.label_mesh.setPixmap(QtGui.QPixmap.fromImage(qimg.copy()))
         except Exception:
             pass  # ignore render errors on cleanup
+    
+    def _run_transformer_inference(self, frame_bgr: np.ndarray) -> np.ndarray:
+        """
+        Run transformer_v1 inference on frame to generate GT θ for pseudo-labeling.
+        
+        This replaces IK-based θ with transformer predictions for better EMG training data.
+        
+        Args:
+            frame_bgr: [H, W, 3] BGR frame
+            
+        Returns:
+            theta: [45] MANO θ parameters
+        """
+        if self.transformer_model is None:
+            # Fallback: return None to use IK θ
+            return None
+        
+        try:
+            import torch
+            from torchvision import transforms
+            
+            # Preprocess frame for transformer
+            # TODO: Match preprocessing from train_colab.ipynb
+            # For now, return None to use IK θ
+            # frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+            # preprocess = transforms.Compose([
+            #     transforms.ToPILImage(),
+            #     transforms.Resize((224, 224)),
+            #     transforms.ToTensor(),
+            #     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            # ])
+            # frame_tensor = preprocess(frame_rgb).unsqueeze(0)
+            # 
+            # with torch.no_grad():
+            #     theta_pred = self.transformer_model(frame_tensor)
+            # return theta_pred[0].cpu().numpy()
+            
+            return None  # Placeholder until transformer model loading is implemented
+        except Exception as e:
+            print(f"[warning] transformer inference failed: {e}")
+            return None
 
     def closeEvent(self, event):
         """handle application close."""
@@ -700,15 +790,26 @@ def main():
     print("to run without emg (camera-only):")
     print("  python src/main_v2.py --no-emg")
     print()
+    print("to enable pseudo-labeling (use transformer_v1 for GT θ):")
+    print("  python src/main_v2.py --pseudo-label --transformer-model path/to/model.pth")
+    print()
 
     # parse command line args
     parser = argparse.ArgumentParser(description="Project Asha v2 - EMG + Hand Tracking")
     parser.add_argument("--no-emg", action="store_true",
                        help="Run without EMG (camera-only mode for testing)")
+    parser.add_argument("--pseudo-label", action="store_true",
+                       help="Enable pseudo-labeling mode (use transformer_v1 for GT θ)")
+    parser.add_argument("--transformer-model", type=str, default=None,
+                       help="Path to transformer_v1 model checkpoint for pseudo-labeling")
     args = parser.parse_args()
 
     app = QtWidgets.QApplication(sys.argv)
-    window = RealtimeApp(enable_emg=not args.no_emg)
+    window = RealtimeApp(
+        enable_emg=not args.no_emg,
+        enable_pseudo_labeling=args.pseudo_label,
+        transformer_model_path=args.transformer_model
+    )
     window.show()
 
     print("\n[ready] show your hand to the camera to start tracking")
