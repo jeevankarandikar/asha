@@ -199,6 +199,55 @@ def test_data_recorder_stats():
         print("[pass] data recorder stats")
 
 
+def test_data_recorder_with_imu():
+    """test data recorder with IMU data."""
+    print("\n[test] data recorder with IMU...")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_path = Path(tmpdir) / "test_imu.h5"
+
+        recorder = DataRecorder(str(output_path), subject_id="test_imu")
+
+        # record emg + imu data @ 500hz
+        for i in range(10):
+            emg_raw = np.random.randn(50, 8).astype(np.float32)
+            emg_filtered = np.random.randn(50, 8).astype(np.float32)
+            imu_data = np.random.randn(50, 18).astype(np.float32)  # 2 sensors × 9-DOF
+            recorder.record_emg(emg_raw, emg_filtered, imu_data)
+
+        # record pose data @ 25fps
+        for i in range(5):
+            theta = np.random.randn(45).astype(np.float32)
+            joints = np.random.randn(21, 3).astype(np.float32)
+            recorder.record_pose(theta, joints, 0.1, 0.9)
+
+        # save to file
+        recorder.save()
+
+        # verify file contents
+        with h5py.File(output_path, 'r') as f:
+            # check imu group exists
+            assert 'imu' in f, "missing imu group"
+            assert 'data' in f['imu'], "missing imu/data"
+            assert 'timestamps' in f['imu'], "missing imu/timestamps"
+
+            # verify shapes
+            imu_data = f['imu/data'][:]
+            assert imu_data.shape == (500, 18), f"unexpected imu shape: {imu_data.shape}"
+
+            imu_timestamps = f['imu/timestamps'][:]
+            assert len(imu_timestamps) == 500, f"unexpected timestamp count: {len(imu_timestamps)}"
+
+        # check stats
+        stats = recorder.get_stats()
+        assert stats['imu_samples'] == 500, f"unexpected imu count: {stats['imu_samples']}"
+        assert stats['imu_rate_hz'] > 0, "imu rate should be positive"
+
+        print(f"  imu samples: {stats['imu_samples']}")
+        print(f"  imu rate: {stats['imu_rate_hz']:.1f}hz")
+        print("[pass] data recorder with IMU")
+
+
 def run_all_tests():
     """run all tests."""
     print("=" * 60)
@@ -210,6 +259,7 @@ def run_all_tests():
         test_data_recorder,
         test_data_recorder_empty,
         test_data_recorder_stats,
+        test_data_recorder_with_imu,
     ]
 
     passed = 0

@@ -654,8 +654,7 @@ class RealtimeApp(QtWidgets.QWidget):
 
         # record emg if active and connected
         if self.recording and self.recorder and connected:
-            self.recorder.record_emg(emg_raw, emg_filtered)
-            # Note: IMU data can be added to recorder in v5 when hardware is available
+            self.recorder.record_emg(emg_raw, emg_filtered, imu_data)
 
     def _update_mesh(self, verts: np.ndarray):
         """update 3d mesh with new vertices (rotated to match camera view)."""

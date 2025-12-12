@@ -25,6 +25,9 @@ class DataRecorder:
       /emg/filtered         [N, 8] float32       after notch+bandpass
       /emg/timestamps       [N] float64          seconds since session start
 
+      /imu/data             [N, 18] float32      IMU data (2 sensors × 9-DOF)
+      /imu/timestamps       [N] float64          seconds since session start
+
       /pose/mano_theta      [M, 45] float32      joint angles (ik output)
       /pose/joints_3d       [M, 21, 3] float32   mediapipe landmarks
       /pose/timestamps      [M] float64          seconds since session start
@@ -62,6 +65,10 @@ class DataRecorder:
         self.emg_filtered_buffer: List[np.ndarray] = []
         self.emg_timestamps_buffer: List[float] = []
 
+        # imu data buffers
+        self.imu_buffer: List[np.ndarray] = []
+        self.imu_timestamps_buffer: List[float] = []
+
         # pose data buffers
         self.theta_buffer: List[np.ndarray] = []
         self.joints_buffer: List[np.ndarray] = []
@@ -83,13 +90,14 @@ class DataRecorder:
         """get current timestamp (seconds since session start)."""
         return time.perf_counter() - self.start_time
 
-    def record_emg(self, emg_raw: np.ndarray, emg_filtered: np.ndarray):
+    def record_emg(self, emg_raw: np.ndarray, emg_filtered: np.ndarray, imu_data: Optional[np.ndarray] = None):
         """
         buffer emg sample (called @ 500hz from EMGThread).
 
         args:
           emg_raw: [num_samples, 8] raw emg voltages
           emg_filtered: [num_samples, 8] filtered emg
+          imu_data: [num_samples, 18] optional IMU data (2 sensors × 9-DOF)
         """
         timestamp = self._get_timestamp()
 
@@ -101,6 +109,11 @@ class DataRecorder:
         num_samples = emg_raw.shape[0]
         sample_timestamps = timestamp + np.arange(num_samples) / 500.0  # assuming 500hz
         self.emg_timestamps_buffer.extend(sample_timestamps)
+
+        # record IMU data if provided
+        if imu_data is not None:
+            self.imu_buffer.append(imu_data)
+            self.imu_timestamps_buffer.extend(sample_timestamps)
 
     def record_pose(
         self,
@@ -151,15 +164,18 @@ class DataRecorder:
     def get_stats(self) -> dict:
         """get current recording statistics."""
         emg_samples = sum(arr.shape[0] for arr in self.emg_raw_buffer)
+        imu_samples = sum(arr.shape[0] for arr in self.imu_buffer) if self.imu_buffer else 0
         pose_samples = len(self.theta_buffer)
         duration = self._get_timestamp()
 
         return {
             'duration_sec': duration,
             'emg_samples': emg_samples,
+            'imu_samples': imu_samples,
             'pose_samples': pose_samples,
             'gestures': len(self.gesture_labels),
             'emg_rate_hz': emg_samples / duration if duration > 0 else 0,
+            'imu_rate_hz': imu_samples / duration if duration > 0 else 0,
             'pose_rate_hz': pose_samples / duration if duration > 0 else 0,
         }
 
@@ -179,6 +195,13 @@ class DataRecorder:
             ik_error = np.array(self.ik_error_buffer)
             mp_confidence = np.array(self.mp_confidence_buffer)
 
+            # concatenate imu buffers if available
+            imu_data = None
+            imu_timestamps = None
+            if self.imu_buffer:
+                imu_data = np.vstack(self.imu_buffer)
+                imu_timestamps = np.array(self.imu_timestamps_buffer)
+
             # write to hdf5
             with h5py.File(self.output_path, 'w') as f:
                 # emg group
@@ -186,6 +209,12 @@ class DataRecorder:
                 emg_grp.create_dataset('raw', data=emg_raw, compression='gzip')
                 emg_grp.create_dataset('filtered', data=emg_filtered, compression='gzip')
                 emg_grp.create_dataset('timestamps', data=emg_timestamps, compression='gzip')
+
+                # imu group (if data was recorded)
+                if imu_data is not None:
+                    imu_grp = f.create_group('imu')
+                    imu_grp.create_dataset('data', data=imu_data, compression='gzip')
+                    imu_grp.create_dataset('timestamps', data=imu_timestamps, compression='gzip')
 
                 # pose group
                 pose_grp = f.create_group('pose')
@@ -225,6 +254,8 @@ class DataRecorder:
             print(f"[success] recording saved!")
             print(f"  duration: {stats['duration_sec']:.1f}s")
             print(f"  emg: {stats['emg_samples']} samples @ {stats['emg_rate_hz']:.1f}hz")
+            if stats['imu_samples'] > 0:
+                print(f"  imu: {stats['imu_samples']} samples @ {stats['imu_rate_hz']:.1f}hz")
             print(f"  pose: {stats['pose_samples']} samples @ {stats['pose_rate_hz']:.1f}hz")
             print(f"  gestures: {stats['gestures']}")
             print(f"  file size: {self.output_path.stat().st_size / 1024:.1f} KB")
