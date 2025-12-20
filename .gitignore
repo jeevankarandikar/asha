@@ -1,4 +1,4 @@
-# python
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -7,64 +7,78 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+*.egg
 
-# virtual environments
+# Virtual environments
 asha_env/
 mano_convert_env/
 venv/
 env/
 ENV/
 
-# mano models (too large, need separate download)
-models/*.pkl
-
-# ide
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
 
-# jupyter
+# Jupyter
 .ipynb_checkpoints/
-# Allow training notebooks in src/training/
-# *.ipynb
+*.ipynb_checkpoints
 
-# logs
+# Data files (large, not in repo)
+data/*
+!data/.gitkeep
+!data/*/
+data/*/
+!data/*/.gitkeep
+
+# Model checkpoints (large, not in repo)
+models/mano/*.pkl
+models/mano/*.npz
+models/v2/*.pth
+models/v3/emg2pose/
+models/v4/*.pth
+models/v5/*.pth
+models/v5/*.png
+
+# Results and logs
+results/
 *.log
 
-# docs/notes
-CLAUDE.md
-.claude/
-docs/archive/
-SESSION_NOTES_*.md
-*_UPDATES*.tex
-*_UPDATES*.md
-MIDTERM_REPORT_FINAL.tex
-DOCUMENTATION_INDEX.md
-QUICK_REFERENCE.md
-CLEANUP_SUMMARY.md
-SESSION_RECOVERY_SUMMARY.md
-docs/reports/*.tex
-
-# generated metrics (can be regenerated)
-docs/v1_metrics.json
-src/results/
-
-# recorded data
-data/
-*.h5
-*.hdf5
-
-# training checkpoints (can be large: ~300MB-500MB per checkpoint)
-checkpoints/
-src/training/checkpoints/
-*.pth
-*.pt
-
-# os
-Thumbs.db
+# OS files (macOS, Windows, Linux)
+.DS_Store
+.DS_Store?
+._*
 .Spotlight-V100
 .Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+*.cache
+
+# Test outputs
+test_output/
+*.pytest_cache/
+
+# Documentation builds
+docs/_build/
+docs/reports/*.aux
+docs/reports/*.log
+docs/reports/*.out
+docs/reports/*.synctex.gz
+docs/reports/*.fdb_latexmk
+docs/reports/*.fls
+
+# Archive directories (tracked but contents may vary)
+# Note: We keep the archive directories in git but ignore generated content
+scripts/archive/*.pyc
+docs/archive/*.pyc
